@@ -2,11 +2,14 @@ package main
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"path/filepath"
+	"text/template"
 	"time"
 )
 
@@ -19,6 +22,9 @@ type UserJwt struct {
 }
 
 var userInstance map[string]string
+
+var htmlTemplates map[string]*template.Template
+
 var serverHost string
 var serverDomain string
 var serverProtocol string
@@ -45,11 +51,14 @@ func main() {
 	serverProtocol = "http"
 	jwtSecret = "yWGOSeOmQu5RG2m8Wgz4KO2kZmD4Yoz5XdNz5sGS4_E"
 
+	parseTemplates()
+
 	http.HandleFunc("/auth/", authHandler)
 	http.HandleFunc("/app/", appHandler)
 	http.HandleFunc("/quiz/", quizHandler)
 	http.HandleFunc("/admin/", adminHandler)
-	//TODO add favicon, robots.txt, etc. handlers
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
 	registerRoot(serverHost)
 
 	err = http.ListenAndServe(serverHost, nil)
@@ -67,21 +76,17 @@ func authHandler(writer http.ResponseWriter, request *http.Request) {
 		//	 get jwt param from request
 		jwtToken := request.URL.Query().Get("jwt")
 		if jwtToken == "" {
-			// TODO a better error message
-			writer.WriteHeader(http.StatusBadRequest)
+			sendError(writer, http.StatusBadRequest, "No jwt token")
 			return
 		}
 		//	 verify jwt, if not valid, return error
 		valid, _, err := verifyJwt(jwtToken)
 		if err != nil {
-			// TODO a better error message
-			log.Println(err)
-			writer.WriteHeader(http.StatusInternalServerError)
+			sendError(writer, http.StatusInternalServerError, err.Error())
 			return
 		}
 		if !valid {
-			// TODO a better error message
-			writer.WriteHeader(http.StatusUnauthorized)
+			sendError(writer, http.StatusUnauthorized, "Please log in")
 			return
 		}
 		//	 set cookie and redirect to /app/
@@ -110,20 +115,17 @@ func appHandler(writer http.ResponseWriter, request *http.Request) {
 	}
 	_, err := writer.Write([]byte("Hi, " + userJwt.Username))
 	if err != nil {
-		log.Println(err)
-		writer.WriteHeader(http.StatusInternalServerError)
+		sendError(writer, http.StatusInternalServerError, err.Error())
 		return
 	}
 }
 
 func quizHandler(writer http.ResponseWriter, request *http.Request) {
-	writer.Write([]byte("quiz"))
-	writer.WriteHeader(http.StatusNotImplemented)
+	sendError(writer, http.StatusForbidden, "You are not allowed to access this page")
 }
 
 func adminHandler(writer http.ResponseWriter, request *http.Request) {
-	writer.Write([]byte("admin"))
-	writer.WriteHeader(http.StatusNotImplemented)
+	sendError(writer, http.StatusForbidden, "You are not an admin")
 }
 
 func registerRoot(serverHost string) {
@@ -134,6 +136,11 @@ func registerRoot(serverHost string) {
 				req.URL.Host = serverHost
 				req.URL.Scheme = "http"
 
+				return
+			} else if req.URL.Path == "/favicon.ico" || req.URL.Path == "/robots.txt" {
+				req.URL.Host = serverHost
+				req.URL.Scheme = "http"
+				req.URL.Path = "/static" + req.URL.Path
 				return
 			}
 			//	TODO
@@ -189,7 +196,6 @@ func verifyJwt(tokenString string) (bool, UserJwt, error) {
 			Username: claims["username"].(string),
 		}, nil
 	} else {
-		fmt.Println(err)
 		log.Println("Invalid claims")
 		return false, UserJwt{}, err
 	}
@@ -197,17 +203,17 @@ func verifyJwt(tokenString string) (bool, UserJwt, error) {
 
 func verifyJwtCookie(writer http.ResponseWriter, request *http.Request) (UserJwt, bool) {
 	jwtCookie, err := request.Cookie("SessionLogin")
+	if errors.Is(err, http.ErrNoCookie) {
+		http.Redirect(writer, request, "/auth/login", http.StatusTemporaryRedirect)
+		return UserJwt{}, false
+	}
 	if err != nil {
-		// TODO a better error message
-		log.Println(err)
-		writer.WriteHeader(http.StatusInternalServerError)
+		sendError(writer, http.StatusInternalServerError, err.Error())
 		return UserJwt{}, false
 	}
 	valid, userJwt, err := verifyJwt(jwtCookie.Value)
 	if err != nil {
-		// TODO a better error message
-		log.Println(err)
-		writer.WriteHeader(http.StatusInternalServerError)
+		sendError(writer, http.StatusInternalServerError, err.Error())
 		return UserJwt{}, false
 	}
 	if !valid {
@@ -215,4 +221,57 @@ func verifyJwtCookie(writer http.ResponseWriter, request *http.Request) (UserJwt
 		return UserJwt{}, false
 	}
 	return userJwt, true
+}
+
+func sendError(writer http.ResponseWriter, status int, long string) {
+	var short string
+	switch status {
+	case http.StatusNotFound:
+		short = "Not Found"
+	case http.StatusUnauthorized:
+		short = "Please log in"
+		long = "<a href=\"/auth/login\">Log in</a>"
+	case http.StatusForbidden:
+		short = "Forbidden"
+	default:
+		short = "An unexpected error occurred"
+	}
+
+	writer.WriteHeader(status)
+
+	err := htmlTemplates["error.html"].Execute(writer, struct {
+		Short string
+		Long  string
+	}{
+		short,
+		long,
+	})
+	if err != nil {
+		log.Println(err)
+		return
+	}
+}
+
+func parseTemplates() {
+	htmlTemplates = make(map[string]*template.Template)
+	templates := make([]string, 0)
+	err := filepath.Walk("templates", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if filepath.Ext(path) == ".html" {
+			templates = append(templates, info.Name())
+		}
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+	for _, templateName := range templates {
+		tmpl, err := template.ParseFiles("templates/" + templateName)
+		if err != nil {
+			panic(err)
+		}
+		htmlTemplates[templateName] = tmpl
+	}
 }
