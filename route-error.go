@@ -3,7 +3,27 @@ package main
 import (
 	"log"
 	"net/http"
+	"strconv"
 )
+
+func registerError() {
+	handleError := func(writer http.ResponseWriter, request *http.Request) {
+		code := request.URL.Query().Get("code")
+		message := request.URL.Query().Get("message")
+
+		intCode, err := strconv.Atoi(code)
+		if err != nil || intCode < 400 || intCode > 599 {
+			intCode = http.StatusInternalServerError
+			message = "Invalid error code"
+		}
+
+		sendError(writer, intCode, message)
+	}
+	// TODO make this actually work, currently error pages that are proxied return 400 codes
+
+	http.HandleFunc("/error", handleError)
+	http.HandleFunc("/error/", handleError)
+}
 
 func sendError(writer http.ResponseWriter, status int, long string) {
 	var short string

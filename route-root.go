@@ -21,9 +21,11 @@ func registerRoot(serverHost string) {
 				req.URL.Path = "/static" + req.URL.Path
 				return
 			}
-			//	TODO
-			//	verify user cookie
-			// check if user has an instance set in ProxyPath cookie, if yes, and it matches, proxy to serverHost/proxy/path
+
+			req.URL.Host = serverHost
+			req.URL.Scheme = "http"
+			req.URL.Path = "/proxy" + req.URL.Path
+			return
 		},
 		ModifyResponse: func(response *http.Response) error {
 			return nil

@@ -18,10 +18,10 @@ type UserJwt struct {
 func registerAuth(jwtSecret string, serverProtocol string, serverDomain string) {
 
 	authHandler := func(writer http.ResponseWriter, request *http.Request) {
-		if request.URL.Path == "/auth/login" {
+		if request.URL.Path == "/auth/login" || request.URL.Path == "/auth/login/" {
 			hostPath := fmt.Sprintf("https://auth.luhack.uk/?redirect=%s://%s/auth/authenticated", serverProtocol, serverDomain)
 			http.Redirect(writer, request, hostPath, http.StatusTemporaryRedirect)
-		} else if request.URL.Path == "/auth/authenticated" {
+		} else if request.URL.Path == "/auth/authenticated" || request.URL.Path == "/auth/authenticated/" {
 			//	 get jwt param from request
 			jwtToken := request.URL.Query().Get("jwt")
 			if jwtToken == "" {
@@ -45,7 +45,7 @@ func registerAuth(jwtSecret string, serverProtocol string, serverDomain string) 
 				Path:  "/",
 			})
 			http.Redirect(writer, request, "/app/", http.StatusTemporaryRedirect)
-		} else if request.URL.Path == "/auth/logout" {
+		} else if request.URL.Path == "/auth/logout" || request.URL.Path == "/auth/logout/" {
 			http.SetCookie(writer, &http.Cookie{
 				Name:     "SessionLogin",
 				Value:    "",
