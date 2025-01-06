@@ -1,0 +1,48 @@
+.logout-link{
+    color: var(--red2);
+    text-decoration: none;
+    text-align: right;
+    display: block;
+    width: 100%;
+}
+.layout-wrapper{
+    max-width: 80ch;
+}
+
+.layout-host {
+    background: var(--background-mid);
+    padding: 1rem;
+    margin: 1rem;
+}
+
+.service-list {
+    list-style-type: none;
+    padding: 0;
+    overflow: auto;
+}
+
+
+.service-wrapper {
+    background: var(--background-highlight);
+    padding: 1rem;
+    margin: 1rem;
+}
+
+@media screen and (max-width: 800px) {
+    .layout-host {
+        margin: 0.5rem;
+        padding: 0.5rem;
+    }
+    .layout-wrapper {
+        flex-direction: column;
+    }
+    .service-wrapper {
+        margin: 0.5rem;
+        padding: 0.5rem;
+    }
+    .service-list {
+        height: auto;
+        overflow: unset;
+        width: 100%;
+    }
+}

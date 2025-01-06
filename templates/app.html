@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{.Title}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<main>
+    <div>
+        <a href="/auth/logout" class="logout-link">Logout</a>
+    </div>
+    <article>
+        <h1>{{.Title}}</h1>
+        <h2>Hi {{.Username}},</h2>
+        <p>
+            Here are all the boxes you can access for today's session.
+        </p>
+    </article>
+    <article class="layout-wrapper">
+        {{range $layout := .Layout}}
+        <section class="layout-host">
+            <h3>{{.Name}}</h3>
+            <ul class="service-list">
+                {{range .Services}}
+                <li class="service-wrapper">
+                    <h4>{{.Name}}</h4>
+                    <p>{{.Description}}</p>
+                    <a href="/proxy/{{ $layout.ID }}//{{.ID}}" class="service-link">Open</a>
+                </li>
+                {{end}}
+            </ul>
+        </section>
+        {{end}}
+    </article>
+</main>
+</body>
+</html>

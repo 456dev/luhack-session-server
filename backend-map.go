@@ -5,6 +5,17 @@ import (
 	"os"
 )
 
+type Layout struct {
+	ID       string `yaml:"id"`
+	Name     string `yaml:"name"`
+	Services []struct {
+		Description string `yaml:"description"`
+		ID          string `yaml:"id"`
+		Name        string `yaml:"name"`
+		Proxy       string `yaml:"proxy"`
+	} `yaml:"services"`
+}
+
 type BackendMap struct {
 	Backends []struct {
 		ID       string `yaml:"id"`
@@ -14,17 +25,8 @@ type BackendMap struct {
 			ServiceID string `yaml:"service_id"`
 		} `yaml:"services"`
 	} `yaml:"backends"`
-	Layout []struct {
-		ID       string `yaml:"id"`
-		Name     string `yaml:"name"`
-		Services []struct {
-			Description string `yaml:"description"`
-			ID          string `yaml:"id"`
-			Name        string `yaml:"name"`
-			Proxy       string `yaml:"proxy"`
-		} `yaml:"services"`
-	} `yaml:"layout"`
-	LbEndpoint string `yaml:"lb_endpoint"`
+	Layout     []Layout `yaml:"layout"`
+	LbEndpoint string   `yaml:"lb_endpoint"`
 }
 
 func parseBackendMap(file string, backendMap **BackendMap) error {

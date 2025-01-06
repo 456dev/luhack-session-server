@@ -7,11 +7,14 @@ import (
 
 type Config struct {
 	Server struct {
-		Host       string `yaml:"host"`
-		Domain     string `yaml:"domain"`
-		Protocol   string `yaml:"protocol"`
-		BackendMap string `yaml:"backendMap"`
+		Host     string `yaml:"host"`
+		Domain   string `yaml:"domain"`
+		Protocol string `yaml:"protocol"`
 	} `yaml:"server"`
+	Session struct {
+		Title      string `yaml:"title"`
+		BackendMap string `yaml:"backendMap"`
+	} `yaml:"session"`
 	Security struct {
 		JwtSecret string `yaml:"jwtSecret"`
 	} `yaml:"security"`

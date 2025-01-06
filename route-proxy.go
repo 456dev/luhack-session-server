@@ -8,9 +8,9 @@ import (
 	"strings"
 )
 
-func getValidBackendPaths(backendMap BackendMap) []string {
+func getValidBackendPaths(layout []Layout) []string {
 	validPaths := make([]string, 0)
-	for _, layout := range backendMap.Layout {
+	for _, layout := range layout {
 		for _, service := range layout.Services {
 			validPaths = append(validPaths, fmt.Sprintf("/%s/%s", layout.ID, service.ID))
 		}
@@ -37,7 +37,7 @@ func registerProxy(backendTarget string, serverHost string, jwtSecret string, ba
 
 	buildInstanceAvailability(&allInstances, backendMap)
 
-	validBackendPaths := getValidBackendPaths(backendMap)
+	validBackendPaths := getValidBackendPaths(backendMap.Layout)
 
 	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {

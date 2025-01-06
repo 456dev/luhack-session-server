@@ -14,7 +14,7 @@ func main() {
 	}
 
 	var backendMap *BackendMap
-	err = parseBackendMap(config.Server.BackendMap, &backendMap)
+	err = parseBackendMap(config.Session.BackendMap, &backendMap)
 	if err != nil {
 		panic(err)
 	}
@@ -26,7 +26,7 @@ func main() {
 	registerError()
 	registerAuth(config.Security.JwtSecret, config.Server.Protocol, config.Server.Domain)
 	registerAdmin()
-	registerApp(config.Security.JwtSecret)
+	registerApp(config.Security.JwtSecret, config.Session.Title, backendMap.Layout)
 	registerProxy(backendMap.LbEndpoint, config.Server.Host, config.Security.JwtSecret, *backendMap)
 
 	registerRoot(config.Server.Host)

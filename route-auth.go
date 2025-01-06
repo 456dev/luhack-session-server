@@ -53,7 +53,11 @@ func registerAuth(jwtSecret string, serverProtocol string, serverDomain string) 
 				MaxAge:   -1,
 				SameSite: http.SameSiteStrictMode,
 			})
-			http.Redirect(writer, request, "/auth/login", http.StatusTemporaryRedirect)
+			err := htmlTemplates["logout.html"].Execute(writer, nil)
+			if err != nil {
+				sendError(writer, http.StatusInternalServerError, err.Error())
+				return
+			}
 		}
 	}
 
