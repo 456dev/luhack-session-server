@@ -27,7 +27,6 @@ func main() {
 	registerAuth(config.Security.JwtSecret, config.Server.Protocol, config.Server.Domain)
 	registerAdmin()
 	registerApp(config.Security.JwtSecret)
-	registerQuiz()
 	registerProxy(backendMap.LbEndpoint, config.Server.Host, config.Security.JwtSecret, *backendMap)
 
 	registerRoot(config.Server.Host)
