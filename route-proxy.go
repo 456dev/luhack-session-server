@@ -7,14 +7,27 @@ import (
 	"strings"
 )
 
-func registerProxy(backendTarget string) {
+func registerProxy(backendTarget string, serverHost string, jwtSecret string) {
 	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
+			req.URL.Scheme = "http"
+			req.URL.Host = serverHost
+			req.URL.Path = "/error"
+			req.URL.RawQuery = "code=403&message=Failed to authenticate"
+
+			jwtCookie, err := req.Cookie("SessionLogin")
+			if err != nil {
+				return
+			}
+			valid, _, err := verifyJwt(jwtCookie.Value, jwtSecret)
+			if err != nil || !valid {
+				return
+			}
+
 			req.URL.Scheme = "http"
 			req.URL.Host = backendTarget
 			req.URL.Path = "/" + strings.TrimPrefix(req.URL.Path, "/proxy")
 
-			//	TODO verify user cookie
 		},
 		ModifyResponse: func(response *http.Response) error {
 			return nil

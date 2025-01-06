@@ -15,47 +15,53 @@ type UserJwt struct {
 	Username string
 }
 
-func authHandler(writer http.ResponseWriter, request *http.Request) {
-	if request.URL.Path == "/auth/login" {
-		hostPath := fmt.Sprintf("https://auth.luhack.uk/?redirect=%s://%s/auth/authenticated", serverProtocol, serverDomain)
-		http.Redirect(writer, request, hostPath, http.StatusTemporaryRedirect)
-	} else if request.URL.Path == "/auth/authenticated" {
-		//	 get jwt param from request
-		jwtToken := request.URL.Query().Get("jwt")
-		if jwtToken == "" {
-			sendError(writer, http.StatusBadRequest, "No jwt token")
-			return
+func registerAuth(jwtSecret string, serverProtocol string, serverDomain string) {
+
+	authHandler := func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path == "/auth/login" {
+			hostPath := fmt.Sprintf("https://auth.luhack.uk/?redirect=%s://%s/auth/authenticated", serverProtocol, serverDomain)
+			http.Redirect(writer, request, hostPath, http.StatusTemporaryRedirect)
+		} else if request.URL.Path == "/auth/authenticated" {
+			//	 get jwt param from request
+			jwtToken := request.URL.Query().Get("jwt")
+			if jwtToken == "" {
+				sendError(writer, http.StatusBadRequest, "No jwt token")
+				return
+			}
+			//	 verify jwt, if not valid, return error
+			valid, _, err := verifyJwt(jwtToken, jwtSecret)
+			if err != nil {
+				sendError(writer, http.StatusInternalServerError, err.Error())
+				return
+			}
+			if !valid {
+				sendError(writer, http.StatusUnauthorized, "Please log in")
+				return
+			}
+			//	 set cookie and redirect to /app/
+			http.SetCookie(writer, &http.Cookie{
+				Name:  "SessionLogin",
+				Value: jwtToken,
+				Path:  "/",
+			})
+			http.Redirect(writer, request, "/app/", http.StatusTemporaryRedirect)
+		} else if request.URL.Path == "/auth/logout" {
+			http.SetCookie(writer, &http.Cookie{
+				Name:     "SessionLogin",
+				Value:    "",
+				Path:     "/",
+				MaxAge:   -1,
+				SameSite: http.SameSiteStrictMode,
+			})
+			http.Redirect(writer, request, "/auth/login", http.StatusTemporaryRedirect)
 		}
-		//	 verify jwt, if not valid, return error
-		valid, _, err := verifyJwt(jwtToken)
-		if err != nil {
-			sendError(writer, http.StatusInternalServerError, err.Error())
-			return
-		}
-		if !valid {
-			sendError(writer, http.StatusUnauthorized, "Please log in")
-			return
-		}
-		//	 set cookie and redirect to /app/
-		http.SetCookie(writer, &http.Cookie{
-			Name:  "SessionLogin",
-			Value: jwtToken,
-			Path:  "/",
-		})
-		http.Redirect(writer, request, "/app/", http.StatusTemporaryRedirect)
-	} else if request.URL.Path == "/auth/logout" {
-		http.SetCookie(writer, &http.Cookie{
-			Name:     "SessionLogin",
-			Value:    "",
-			Path:     "/",
-			MaxAge:   -1,
-			SameSite: http.SameSiteStrictMode,
-		})
-		http.Redirect(writer, request, "/auth/login", http.StatusTemporaryRedirect)
 	}
+
+	http.HandleFunc("/auth/", authHandler)
+
 }
 
-func verifyJwt(tokenString string) (bool, UserJwt, error) {
+func verifyJwt(tokenString string, jwtSecret string) (bool, UserJwt, error) {
 	if tokenString == "" {
 		log.Println("No token")
 		return false, UserJwt{}, nil
@@ -98,7 +104,7 @@ func verifyJwt(tokenString string) (bool, UserJwt, error) {
 	}
 }
 
-func verifyJwtCookie(writer http.ResponseWriter, request *http.Request) (UserJwt, bool) {
+func verifyJwtCookie(writer http.ResponseWriter, request *http.Request, jwtSecret string) (UserJwt, bool) {
 	jwtCookie, err := request.Cookie("SessionLogin")
 	if errors.Is(err, http.ErrNoCookie) {
 		http.Redirect(writer, request, "/auth/login", http.StatusTemporaryRedirect)
@@ -108,7 +114,7 @@ func verifyJwtCookie(writer http.ResponseWriter, request *http.Request) (UserJwt
 		sendError(writer, http.StatusInternalServerError, err.Error())
 		return UserJwt{}, false
 	}
-	valid, userJwt, err := verifyJwt(jwtCookie.Value)
+	valid, userJwt, err := verifyJwt(jwtCookie.Value, jwtSecret)
 	if err != nil {
 		sendError(writer, http.StatusInternalServerError, err.Error())
 		return UserJwt{}, false
