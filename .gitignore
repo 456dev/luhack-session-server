@@ -1,4 +1,6 @@
 .idea
+release.tar.gz
 backend-map.yml
 config.yml
 log.txt
+session-server
