@@ -5,7 +5,16 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
+
+func getLastNLines(logContent string, n int) string {
+	lines := strings.Split(logContent, "\n")
+	if len(lines) <= n {
+		return logContent
+	}
+	return strings.Join(lines[len(lines)-n:], "\n")
+}
 
 func registerAdmin(jwtSecret string, userInstances *map[UID]Instance, allInstances *map[Instance]bool) {
 	adminHandler := func(writer http.ResponseWriter, request *http.Request) {
@@ -50,7 +59,7 @@ func registerAdmin(jwtSecret string, userInstances *map[UID]Instance, allInstanc
 			return
 		}
 
-		pageData.Logs = string(logFile)
+		pageData.Logs = getLastNLines(string(logFile), 1000)
 
 		pageData.TotalInstances = len(*allInstances)
 		pageData.UsedInstances = len(*userInstances)

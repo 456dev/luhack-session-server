@@ -29,7 +29,6 @@ func startsWithValidPath(path string, validPaths []string) bool {
 }
 
 func registerProxy(backendTarget string, serverHost string, jwtSecret string, backendMap BackendMap, userInstances *map[UID]Instance, allInstances *map[Instance]bool) {
-	// TODO fix bug that causes redirects to format /0/box1/http instead of /proxy/box1/http
 	backendSplit := strings.Split(backendTarget, "://")
 	backendProtocol := backendSplit[0]
 	backendHost := backendSplit[1]
