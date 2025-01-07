@@ -33,13 +33,16 @@ func main() {
 
 	parseTemplates()
 
+	userInstances := make(map[UID]Instance)
+	allInstances := make(map[Instance]bool)
+
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	registerError()
 	registerAuth(config.Security.JwtSecret, config.Server.Protocol, config.Server.Domain)
-	registerAdmin()
+	registerAdmin(config.Security.JwtSecret, &userInstances, &allInstances)
 	registerApp(config.Security.JwtSecret, config.Session.Title, backendMap.Layout)
-	registerProxy(backendMap.LbEndpoint, config.Server.Host, config.Security.JwtSecret, *backendMap)
+	registerProxy(backendMap.LbEndpoint, config.Server.Host, config.Security.JwtSecret, *backendMap, &userInstances, &allInstances)
 
 	registerRoot(config.Server.Host)
 

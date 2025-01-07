@@ -1,0 +1,51 @@
+.container {
+    width: 80%;
+    margin: auto;
+}
+
+h1 {
+    text-align: center;
+}
+
+.stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.logs {
+    margin-top: 20px;
+}
+
+.logs pre {
+    background-color: var(--background-mid);
+    padding: 10px;
+    border: 1px solid var(--red2);
+    overflow: auto;
+    max-height: 400px;
+}
+
+.user-instances table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.user-instances th, .user-instances td {
+    border: 1px solid var(--red2);
+    padding: 8px;
+    text-align: left;
+}
+
+.user-instances th {
+    background-color: var(--background-highlight);
+    font-weight: bold;
+}
+
+.user-instances tr:nth-child(even) {
+    background-color: var(--background-mid);
+}
+
+.user-instances tr:hover {
+    background-color: var(--red2);
+}

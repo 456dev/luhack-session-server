@@ -28,15 +28,13 @@ func startsWithValidPath(path string, validPaths []string) bool {
 	return false
 }
 
-func registerProxy(backendTarget string, serverHost string, jwtSecret string, backendMap BackendMap) {
+func registerProxy(backendTarget string, serverHost string, jwtSecret string, backendMap BackendMap, userInstances *map[UID]Instance, allInstances *map[Instance]bool) {
+	// TODO fix bug that causes redirects to format /0/box1/http instead of /proxy/box1/http
 	backendSplit := strings.Split(backendTarget, "://")
 	backendProtocol := backendSplit[0]
 	backendHost := backendSplit[1]
 
-	userInstances := make(map[UID]Instance)
-	allInstances := make(map[Instance]bool)
-
-	buildInstanceAvailability(&allInstances, backendMap)
+	buildInstanceAvailability(allInstances, backendMap)
 
 	validBackendPaths := getValidBackendPaths(backendMap.Layout)
 
@@ -60,10 +58,10 @@ func registerProxy(backendTarget string, serverHost string, jwtSecret string, ba
 			}
 			// Check if the user has been allocated an instance, if not, return an error
 			uid := buildUid(user)
-			instance, err := uid.getInstance(&userInstances, &allInstances)
+			instance, err := uid.getInstance(userInstances, allInstances)
 			if err != nil {
 				req.URL.RawQuery = "code=500&message=No instances available"
-				log.Println("Used up all", len(allInstances), "instances")
+				log.Println("Used up all", len(*allInstances), "instances")
 				return
 			}
 

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/admin.css">
+</head>
+<body>
+<div class="container">
+    <h1>Admin Panel</h1>
+    <div class="stats">
+        <div>
+            <h2>Total Instances</h2>
+            <p>{{.TotalInstances}}</p>
+        </div>
+        <div>
+            <h2>Used Instances</h2>
+            <p>{{.UsedInstances}}</p>
+        </div>
+        <div>
+            <h2>Free Instances</h2>
+            <p>{{.FreeInstances}}</p>
+        </div>
+    </div>
+    <div class="user-instances">
+        <h2>User Instances</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>User</th>
+                <th>Instance</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{range $uid, $instance := .UserInstances}}
+            <tr>
+                <td>{{$uid}}</td>
+                <td>{{$instance}}</td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>
+    </div>
+    <div class="logs">
+        <h2>Logs</h2>
+        <pre>{{.Logs}}</pre>
+    </div>
+</div>
+</body>
+</html>
