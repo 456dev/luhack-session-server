@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 type UID string
 type Instance string
@@ -30,6 +33,7 @@ func (uid UID) getInstance(userInstances *map[UID]Instance, allInstances *map[In
 	}
 	(*allInstances)[instance] = false
 	(*userInstances)[uid] = instance
+	log.Println("Assigned instance ", instance, " to ", uid)
 	return instance, nil
 }
 

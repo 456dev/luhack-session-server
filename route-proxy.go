@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"strings"
@@ -62,6 +63,7 @@ func registerProxy(backendTarget string, serverHost string, jwtSecret string, ba
 			instance, err := uid.getInstance(&userInstances, &allInstances)
 			if err != nil {
 				req.URL.RawQuery = "code=500&message=No instances available"
+				log.Println("Used up all", len(allInstances), "instances")
 				return
 			}
 
@@ -92,6 +94,7 @@ func registerProxy(backendTarget string, serverHost string, jwtSecret string, ba
 			req.URL.Path = targetPath
 			req.URL.RawQuery = initialQuery
 
+			log.Println("User", uid, "requested", initialPath, "routed to", targetPath, "on instance", instance, "with query", initialQuery, "request type", req.Method)
 		},
 		ModifyResponse: func(response *http.Response) error {
 			return nil

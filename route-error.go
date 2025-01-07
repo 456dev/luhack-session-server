@@ -49,7 +49,7 @@ func sendError(writer http.ResponseWriter, status int, long string) {
 		long,
 	})
 	if err != nil {
-		log.Println(err)
+		log.Println("Failed to execute error template:", err)
 		return
 	}
 }

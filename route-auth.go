@@ -26,16 +26,19 @@ func registerAuth(jwtSecret string, serverProtocol string, serverDomain string) 
 			jwtToken := request.URL.Query().Get("jwt")
 			if jwtToken == "" {
 				sendError(writer, http.StatusBadRequest, "No jwt token")
+				log.Println("No jwt token from user with IP", request.RemoteAddr, "with user agent", request.UserAgent())
 				return
 			}
 			//	 verify jwt, if not valid, return error
 			valid, _, err := verifyJwt(jwtToken, jwtSecret)
 			if err != nil {
 				sendError(writer, http.StatusInternalServerError, err.Error())
+				log.Println("Failed to verify jwt from user with IP", request.RemoteAddr, "with user agent", request.UserAgent())
 				return
 			}
 			if !valid {
 				sendError(writer, http.StatusUnauthorized, "Please log in")
+				log.Println("Invalid jwt from user with IP", request.RemoteAddr, "with user agent", request.UserAgent())
 				return
 			}
 			//	 set cookie and redirect to /app/
@@ -56,6 +59,7 @@ func registerAuth(jwtSecret string, serverProtocol string, serverDomain string) 
 			err := htmlTemplates["logout.html"].Execute(writer, nil)
 			if err != nil {
 				sendError(writer, http.StatusInternalServerError, err.Error())
+				log.Println("Failed to render logout.html from user with IP", request.RemoteAddr, "with user agent", request.UserAgent())
 				return
 			}
 		}
@@ -80,7 +84,7 @@ func verifyJwt(tokenString string, jwtSecret string) (bool, UserJwt, error) {
 		return []byte(jwtSecret), nil
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Failed to parse token:", err)
 		return false, UserJwt{}, err
 	}
 
@@ -103,7 +107,7 @@ func verifyJwt(tokenString string, jwtSecret string) (bool, UserJwt, error) {
 			Username: claims["username"].(string),
 		}, nil
 	} else {
-		log.Println("Invalid claims")
+		log.Println("Failed to parse claims")
 		return false, UserJwt{}, err
 	}
 }
@@ -116,11 +120,13 @@ func verifyJwtCookie(writer http.ResponseWriter, request *http.Request, jwtSecre
 	}
 	if err != nil {
 		sendError(writer, http.StatusInternalServerError, err.Error())
+		log.Println("Failed to get jwt cookie from user with IP", request.RemoteAddr, "with user agent", request.UserAgent())
 		return UserJwt{}, false
 	}
 	valid, userJwt, err := verifyJwt(jwtCookie.Value, jwtSecret)
 	if err != nil {
 		sendError(writer, http.StatusInternalServerError, err.Error())
+		log.Println("Failed to verify jwt from user with IP", request.RemoteAddr, "with user agent", request.UserAgent())
 		return UserJwt{}, false
 	}
 	if !valid {

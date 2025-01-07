@@ -31,6 +31,8 @@ func registerApp(jwtSecret string, appTitle string, layout []Layout) {
 			sendError(writer, http.StatusInternalServerError, "An unexpected error occurred")
 			return
 		}
+
+		log.Println("User", buildUid(userJwt), "accessed app")
 	}
 
 	http.HandleFunc("/app/", appHandler)

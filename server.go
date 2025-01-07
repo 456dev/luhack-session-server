@@ -1,14 +1,26 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
-	// TODO add proper logging
+	logFile, err := os.OpenFile("log.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer func(logFile *os.File) {
+		err := logFile.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(logFile)
+	log.SetOutput(logFile)
 
 	var config *Config
-	err := parseConfig("config.yml", &config)
+	err = parseConfig("config.yml", &config)
 	if err != nil {
 		panic(err)
 	}
@@ -30,6 +42,8 @@ func main() {
 	registerProxy(backendMap.LbEndpoint, config.Server.Host, config.Security.JwtSecret, *backendMap)
 
 	registerRoot(config.Server.Host)
+
+	log.Println("Listening on", config.Server.Host)
 
 	err = http.ListenAndServe(config.Server.Host, nil)
 	if err != nil {
