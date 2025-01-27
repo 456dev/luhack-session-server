@@ -6,7 +6,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"log"
 	"net/http"
-	"time"
 )
 
 type UserJwt struct {
@@ -75,15 +74,16 @@ func verifyJwt(tokenString string, jwtSecret string) (bool, UserJwt, error) {
 		return false, UserJwt{}, nil
 	}
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
-		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
 		return []byte(jwtSecret), nil
 	})
 	if err != nil {
+		if err.Error() == "token has invalid claims: token is expired" {
+			return false, UserJwt{}, nil
+		}
 		log.Println("Failed to parse token:", err)
 		return false, UserJwt{}, err
 	}
@@ -91,13 +91,6 @@ func verifyJwt(tokenString string, jwtSecret string) (bool, UserJwt, error) {
 	if !token.Valid {
 		log.Println("Invalid token")
 		return false, UserJwt{}, nil
-	}
-
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		if claims["exp"].(float64) < float64(time.Now().Unix()) {
-			log.Println("Token expired")
-			return false, UserJwt{}, nil
-		}
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {

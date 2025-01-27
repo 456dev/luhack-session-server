@@ -1,6 +1,7 @@
 package main
 
 import (
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -43,10 +44,10 @@ func sendError(writer http.ResponseWriter, status int, long string) {
 
 	err := htmlTemplates["error.html"].Execute(writer, struct {
 		Short string
-		Long  string
+		Long  template.HTML
 	}{
 		short,
-		long,
+		template.HTML(long),
 	})
 	if err != nil {
 		log.Println("Failed to execute error template:", err)
