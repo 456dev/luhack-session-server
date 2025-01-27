@@ -17,6 +17,7 @@ func getLastNLines(logContent string, n int) string {
 }
 
 func registerAdmin(jwtSecret string, userInstances *map[UID]Instance, allInstances *map[Instance]bool) {
+
 	adminHandler := func(writer http.ResponseWriter, request *http.Request) {
 		sessionCookie, err := request.Cookie("SessionLogin")
 		if errors.Is(err, http.ErrNoCookie) {
@@ -44,6 +45,16 @@ func registerAdmin(jwtSecret string, userInstances *map[UID]Instance, allInstanc
 			return
 		}
 
+		if strings.HasPrefix(request.URL.Path, "/admin/release/") {
+			uid := UID(request.URL.Path[len("/admin/release/"):])
+			err := uid.releaseInstance(userInstances, allInstances)
+			if err != nil {
+				sendError(writer, http.StatusInternalServerError, err.Error())
+				return
+			}
+			http.Redirect(writer, request, "/admin/", http.StatusTemporaryRedirect)
+		}
+
 		pageData := struct {
 			Logs           string
 			TotalInstances int
@@ -62,9 +73,18 @@ func registerAdmin(jwtSecret string, userInstances *map[UID]Instance, allInstanc
 		pageData.Logs = getLastNLines(string(logFile), 1000)
 
 		pageData.TotalInstances = len(*allInstances)
-		pageData.UsedInstances = len(*userInstances)
-		pageData.FreeInstances = pageData.TotalInstances - pageData.UsedInstances
+		pageData.UsedInstances = 0
+		pageData.FreeInstances = 0
 		pageData.UserInstances = *userInstances
+
+		for _, instance := range *allInstances {
+			if !instance {
+				pageData.UsedInstances++
+			}
+			if instance {
+				pageData.FreeInstances++
+			}
+		}
 
 		err = htmlTemplates["admin.html"].Execute(writer, pageData)
 		if err != nil {
@@ -75,4 +95,5 @@ func registerAdmin(jwtSecret string, userInstances *map[UID]Instance, allInstanc
 	}
 
 	http.HandleFunc("/admin/", adminHandler)
+
 }

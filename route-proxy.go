@@ -33,8 +33,6 @@ func registerProxy(backendTarget string, serverHost string, jwtSecret string, ba
 	backendProtocol := backendSplit[0]
 	backendHost := backendSplit[1]
 
-	buildInstanceAvailability(allInstances, backendMap)
-
 	validBackendPaths := getValidBackendPaths(backendMap.Layout)
 
 	proxy := &httputil.ReverseProxy{

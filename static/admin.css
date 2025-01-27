@@ -47,5 +47,5 @@ h1 {
 }
 
 .user-instances tr:hover {
-    background-color: var(--red2);
+    background-color: var(--red1);
 }

@@ -35,6 +35,7 @@
             <tr>
                 <th>User</th>
                 <th>Instance</th>
+                <th>Actions</th>
             </tr>
             </thead>
             <tbody>
@@ -42,6 +43,9 @@
             <tr>
                 <td>{{$uid}}</td>
                 <td>{{$instance}}</td>
+                <td>
+                    <a href="/admin/release/{{$uid}}">Release</a>
+                </td>
             </tr>
             {{end}}
             </tbody>

@@ -33,8 +33,7 @@ func main() {
 
 	parseTemplates()
 
-	userInstances := make(map[UID]Instance)
-	allInstances := make(map[Instance]bool)
+	userInstances, allInstances := loadInstances(*backendMap)
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
