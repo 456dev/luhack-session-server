@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/gob"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -43,13 +45,6 @@ func (uid UID) getInstance(userInstances *map[UID]Instance, allInstances *map[In
 	storeInstances(*userInstances, *allInstances)
 	log.Println("Assigned instance ", instance, " to ", uid)
 	return instance, nil
-}
-
-func buildInstanceAvailability(allInstances *map[Instance]bool, backendMap BackendMap) {
-	for _, backend := range backendMap.Backends {
-		instance := Instance(backend.ID)
-		(*allInstances)[instance] = true
-	}
 }
 
 func (uid UID) releaseInstance(userInstances *map[UID]Instance, allInstances *map[Instance]bool) error {
@@ -103,13 +98,96 @@ func (instanceID *Instance) isHealthy(instances []Backend) bool {
 }
 
 func storeInstances(userInstances map[UID]Instance, allInstances map[Instance]bool) {
-	// TODO implement instance storage
+	file, err := os.Create("instances.gob")
+	if err != nil {
+		log.Fatal("Failed to create file:", err)
+		return
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Fatal("Failed to close file:", err)
+		}
+	}(file)
+
+	encoder := gob.NewEncoder(file)
+	err = encoder.Encode(userInstances)
+	if err != nil {
+		log.Fatal("Failed to encode userInstances:", err)
+		return
+	}
+
+	err = encoder.Encode(allInstances)
+	if err != nil {
+		log.Fatal("Failed to encode allInstances:", err)
+		return
+	}
+}
+
+func buildInstanceAvailability(allInstances *map[Instance]bool, backendMap BackendMap) {
+	for _, backend := range backendMap.Backends {
+		instance := Instance(backend.ID)
+		(*allInstances)[instance] = true
+	}
 }
 
 func loadInstances(backendMap BackendMap) (map[UID]Instance, map[Instance]bool) {
-	// TODO implement instance loading
-	// TODO buildInstanceAvailability(allInstances, backendMap)
-	allInstances := make(map[Instance]bool)
-	buildInstanceAvailability(&allInstances, backendMap)
-	return make(map[UID]Instance), allInstances
+	backendMapInstances := make(map[Instance]bool)
+	buildInstanceAvailability(&backendMapInstances, backendMap)
+
+	file, err := os.Open("instances.gob")
+	if err != nil {
+		log.Println("Failed to open file:", err)
+		return make(map[UID]Instance), backendMapInstances
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Fatal("Failed to close file:", err)
+		}
+	}(file)
+
+	decoder := gob.NewDecoder(file)
+
+	var userInstances map[UID]Instance
+	err = decoder.Decode(&userInstances)
+	if err != nil {
+		log.Println("Failed to decode userInstances:", err)
+		userInstances = make(map[UID]Instance)
+	}
+
+	var allInstances map[Instance]bool
+	err = decoder.Decode(&allInstances)
+	if err != nil {
+		log.Println("Failed to decode allInstances:", err)
+		allInstances = make(map[Instance]bool)
+	}
+
+	for instance, _ := range allInstances {
+		if _, ok := backendMapInstances[instance]; !ok {
+			log.Println("Removing invalid instance from allInstances: ", instance)
+			delete(allInstances, instance)
+		}
+	}
+
+	for _, backend := range backendMap.Backends {
+		instance := Instance(backend.ID)
+		if _, ok := allInstances[instance]; !ok {
+			log.Println("Adding missing instance to allInstances: ", instance)
+			allInstances[instance] = true
+		}
+	}
+
+	for uid, instance := range userInstances {
+		if _, ok := allInstances[instance]; !ok {
+			log.Println("Removing invalid instance from userInstances: ", instance)
+			delete(userInstances, uid)
+		} else {
+			log.Println("Setting existing instance to used: ", instance, "(belongs to ", uid, ")")
+			allInstances[instance] = false
+		}
+
+	}
+
+	return userInstances, allInstances
 }

@@ -4,3 +4,4 @@ backend-map.yml
 config.yml
 log.txt
 session-server
+instances.gob
