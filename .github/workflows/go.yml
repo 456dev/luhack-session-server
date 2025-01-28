@@ -23,12 +23,6 @@ jobs:
       - name: Bundle
         run: make bundle
 
-      - name: Remove release
-        id: remove_release
-        run: |
-          curl -X DELETE https://api.github.com/repos/${{ github.repository }}/releases/tags/v1.0.0 -H "Authorization: token ${{ secrets.PAT }}"
-
-
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
