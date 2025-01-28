@@ -25,26 +25,8 @@ jobs:
 
       - name: Remove release
         id: remove_release
-        uses: actions/github-script@v4
-        with:
-          github-token: ${{ secrets.PAT }}
-          script: |
-            const { Octokit } = require('@octokit/core');
-            const { paginateRest } = require('@octokit/plugin-paginate-rest');
-            const MyOctokit = Octokit.plugin(paginateRest);
-            const octokit = new MyOctokit({ auth: process.env.GITHUB_TOKEN });
-            const owner = process.env.GITHUB_REPOSITORY.split('/')[0];
-            const repo = process.env.GITHUB_REPOSITORY.split('/')[1];
-            const releases = await octokit.paginate('GET /repos/{owner}/{repo}/releases');
-            for (const release of releases) {
-              if (release.tag_name === 'v1.0.0') {
-                await octokit.request('DELETE /repos/{owner}/{repo}/releases/{release_id}', {
-                  owner,
-                  repo,
-                  release_id: release.id
-                });
-              }
-            }
+        run: |
+          curl -X DELETE https://api.github.com/repos/${{ github.repository }}/releases/tags/v1.0.0 -H "Authorization: token ${{ secrets.PAT }}"
 
 
       - name: Create Release
