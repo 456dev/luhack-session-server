@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"time"
 )
 
 type UID string
@@ -12,22 +15,26 @@ func buildUid(user UserJwt) UID {
 	return UID(user.Username + "@" + user.Provider)
 }
 
-func nextFreeInstance(allInstances *map[Instance]bool) Instance {
+func nextFreeInstance(allInstances *map[Instance]bool, backends []Backend) Instance {
 	for instance, value := range *allInstances {
-		if value && instance.isHealthy() {
+		isHealthy := instance.isHealthy(backends)
+		if !isHealthy {
+			log.Println("Instance ", instance, " is unhealthy")
+		}
+		if value && isHealthy {
 			return instance
 		}
 	}
 	return ""
 }
 
-func (uid UID) getInstance(userInstances *map[UID]Instance, allInstances *map[Instance]bool) (Instance, error) {
+func (uid UID) getInstance(userInstances *map[UID]Instance, allInstances *map[Instance]bool, backends []Backend) (Instance, error) {
 	instance, ok := (*userInstances)[uid]
 	if ok {
 		return instance, nil
 	}
 
-	instance = nextFreeInstance(allInstances)
+	instance = nextFreeInstance(allInstances, backends)
 	if instance == "" {
 		return "", fmt.Errorf("no instances available")
 	}
@@ -57,8 +64,41 @@ func (uid UID) releaseInstance(userInstances *map[UID]Instance, allInstances *ma
 	return nil
 }
 
-func (instance *Instance) isHealthy() bool {
-	// TODO implement health check
+func pokeHTTP(host string) bool {
+	client := http.Client{
+		Timeout: 2 * time.Second,
+	}
+	resp, err := client.Get(host)
+	if err != nil {
+		return false
+	}
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
+
+	return true
+}
+
+func (instanceID *Instance) isHealthy(instances []Backend) bool {
+	found := false
+	var instance Backend
+	for _, instance = range instances {
+		if instance.ID == string(*instanceID) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return false
+	}
+	for _, service := range instance.Services {
+		if service.Host == "" {
+			return false
+		}
+		if !pokeHTTP("http://" + service.Host) {
+			return false
+		}
+	}
 	return true
 }
 

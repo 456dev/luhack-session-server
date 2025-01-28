@@ -16,17 +16,19 @@ type Layout struct {
 	} `yaml:"services"`
 }
 
+type Backend struct {
+	ID       string `yaml:"id"`
+	Services []struct {
+		BoxID     string `yaml:"box_id"`
+		Host      string `yaml:"host"`
+		ServiceID string `yaml:"service_id"`
+	} `yaml:"services"`
+}
+
 type BackendMap struct {
-	Backends []struct {
-		ID       string `yaml:"id"`
-		Services []struct {
-			BoxID     string `yaml:"box_id"`
-			Host      string `yaml:"host"`
-			ServiceID string `yaml:"service_id"`
-		} `yaml:"services"`
-	} `yaml:"backends"`
-	Layout     []Layout `yaml:"layout"`
-	LbEndpoint string   `yaml:"lb_endpoint"`
+	Backends   []Backend `yaml:"backends"`
+	Layout     []Layout  `yaml:"layout"`
+	LbEndpoint string    `yaml:"lb_endpoint"`
 }
 
 func parseBackendMap(file string, backendMap **BackendMap) error {

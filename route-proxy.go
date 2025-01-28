@@ -55,7 +55,7 @@ func registerProxy(backendTarget string, serverHost string, jwtSecret string, ba
 			}
 			// Check if the user has been allocated an instance, if not, return an error
 			uid := buildUid(user)
-			instance, err := uid.getInstance(userInstances, allInstances)
+			instance, err := uid.getInstance(userInstances, allInstances, backendMap.Backends)
 			if err != nil {
 				req.URL.RawQuery = "code=500&message=No instances available"
 				log.Println("Used up all", len(*allInstances), "instances")
