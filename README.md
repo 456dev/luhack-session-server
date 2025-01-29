@@ -32,6 +32,7 @@ session:
 
 security:
   jwtSecret: "change_me"
+  server: "https://auth.luhack.uk"
 ```
 
 - The `host` field is the address that the server will listen on.
@@ -40,4 +41,5 @@ security:
 - The `title` field is the title of the session that will be displayed on the front page.
 - The `backendMap` field is the path to the backend map file, this expects the standard format of the backend map file.
 - The `jwtSecret` field is the secret that the server will use to sign JWTs.
+- The `server` field is the address of the auth server that the server will use to verify JWTs.
  
