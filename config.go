@@ -17,6 +17,7 @@ type Config struct {
 	} `yaml:"session"`
 	Security struct {
 		JwtSecret string `yaml:"jwtSecret"`
+		Server    string `yaml:"server"`
 	} `yaml:"security"`
 }
 

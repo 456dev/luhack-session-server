@@ -14,11 +14,11 @@ type UserJwt struct {
 	Username string
 }
 
-func registerAuth(jwtSecret string, serverProtocol string, serverDomain string) {
+func registerAuth(jwtSecret string, serverProtocol string, serverDomain string, config *Config) {
 
 	authHandler := func(writer http.ResponseWriter, request *http.Request) {
 		if request.URL.Path == "/auth/login" || request.URL.Path == "/auth/login/" {
-			hostPath := fmt.Sprintf("https://auth.luhack.uk/?redirect=%s://%s/auth/authenticated", serverProtocol, serverDomain)
+			hostPath := fmt.Sprintf(config.Security.Server+"/?redirect=%s://%s/auth/authenticated", serverProtocol, serverDomain)
 			http.Redirect(writer, request, hostPath, http.StatusTemporaryRedirect)
 		} else if request.URL.Path == "/auth/authenticated" || request.URL.Path == "/auth/authenticated/" {
 			//	 get jwt param from request
