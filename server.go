@@ -41,7 +41,7 @@ func main() {
 	registerAuth(config.Security.JwtSecret, config.Server.Protocol, config.Server.Domain, config)
 	registerAdmin(config.Security.JwtSecret, &userInstances, &allInstances)
 	registerApp(config.Security.JwtSecret, config.Session.Title, backendMap.Layout)
-	registerProxy(backendMap.LbEndpoint, config.Server.Host, config.Security.JwtSecret, *backendMap, &userInstances, &allInstances)
+	registerProxy(backendMap.LbEndpoint, config.Server.Host, config.Security.JwtSecret, *backendMap, &userInstances, &allInstances, config.Session.AllocationMode)
 
 	registerRoot(config.Server.Host)
 

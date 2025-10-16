@@ -28,7 +28,7 @@ func startsWithValidPath(path string, validPaths []string) bool {
 	return false
 }
 
-func registerProxy(backendTarget string, serverHost string, jwtSecret string, backendMap BackendMap, userInstances *map[UID]Instance, allInstances *map[Instance]bool) {
+func registerProxy(backendTarget string, serverHost string, jwtSecret string, backendMap BackendMap, userInstances *map[UID]Instance, allInstances *map[Instance]bool, instanceAllocationMode AllocationMode) {
 	backendSplit := strings.Split(backendTarget, "://")
 	backendProtocol := backendSplit[0]
 	backendHost := backendSplit[1]
@@ -54,8 +54,14 @@ func registerProxy(backendTarget string, serverHost string, jwtSecret string, ba
 				return
 			}
 			// Check if the user has been allocated an instance, if not, return an error
-			uid := buildUid(user)
-			instance, err := uid.getInstance(userInstances, allInstances, backendMap.Backends)
+			userUid := buildUid(user)
+
+			instanceUid := userUid
+			if instanceAllocationMode == AllocationModeCentral {
+				instanceUid = CentralUser
+			}
+
+			instance, err := instanceUid.getInstance(userInstances, allInstances, backendMap.Backends)
 			if err != nil {
 				req.URL.RawQuery = "code=500&message=No instances available"
 				log.Println("Used up all", len(*allInstances), "instances")
@@ -89,7 +95,7 @@ func registerProxy(backendTarget string, serverHost string, jwtSecret string, ba
 			req.URL.Path = targetPath
 			req.URL.RawQuery = initialQuery
 
-			log.Println("User", uid, "requested", initialPath, "routed to", targetPath, "on instance", instance, "with query", initialQuery, "request type", req.Method)
+			log.Println("User", userUid, " (", instanceUid, ") requested", initialPath, "routed to", targetPath, "on instance", instance, "with query", initialQuery, "request type", req.Method)
 		},
 		ModifyResponse: func(response *http.Response) error {
 			return nil

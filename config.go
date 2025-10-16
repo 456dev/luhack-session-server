@@ -1,9 +1,33 @@
 package main
 
 import (
-	"gopkg.in/yaml.v3"
+	"fmt"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
+
+type AllocationMode string
+
+const (
+	AllocationModeCentral AllocationMode = "central"
+	AllocationModePerUser AllocationMode = "per-user"
+)
+
+func (m *AllocationMode) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var s string
+	if err := unmarshal(&s); err != nil {
+		return err
+	}
+
+	switch s {
+	case string(AllocationModeCentral), string(AllocationModePerUser):
+		*m = AllocationMode(s)
+		return nil
+	default:
+		return fmt.Errorf("invalid allocationMode: %q", s)
+	}
+}
 
 type Config struct {
 	Server struct {
@@ -12,8 +36,9 @@ type Config struct {
 		Protocol string `yaml:"protocol"`
 	} `yaml:"server"`
 	Session struct {
-		Title      string `yaml:"title"`
-		BackendMap string `yaml:"backendMap"`
+		Title          string         `yaml:"title"`
+		BackendMap     string         `yaml:"backendMap"`
+		AllocationMode AllocationMode `yaml:"allocationMode"`
 	} `yaml:"session"`
 	Security struct {
 		JwtSecret string `yaml:"jwtSecret"`

@@ -11,6 +11,10 @@ import (
 )
 
 type UID string
+
+// Special UID for use with central instance allocation mode
+const CentralUser UID = "singleinstance@central"
+
 type Instance string
 
 func buildUid(user UserJwt) UID {
