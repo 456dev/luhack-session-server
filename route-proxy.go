@@ -41,7 +41,7 @@ func registerProxy(backendTarget string, serverHost string, jwtSecret string, ba
 			initialQuery := req.URL.RawQuery
 			req.URL.Scheme = "http"
 			req.URL.Host = serverHost
-			req.URL.Path = "error"
+			req.URL.Path = "_session_server/error"
 			req.URL.RawQuery = "code=403&message=Failed to authenticate"
 
 			jwtCookie, err := req.Cookie("SessionLogin")

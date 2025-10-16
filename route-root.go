@@ -18,7 +18,7 @@ func registerRoot(serverHost string) {
 			} else if req.URL.Path == "/favicon.ico" || req.URL.Path == "/robots.txt" {
 				req.URL.Host = serverHost
 				req.URL.Scheme = "http"
-				req.URL.Path = "/static" + req.URL.Path
+				req.URL.Path = "/_session_server/static" + req.URL.Path
 				return
 			}
 

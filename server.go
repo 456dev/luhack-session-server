@@ -35,7 +35,7 @@ func main() {
 
 	userInstances, allInstances := loadInstances(*backendMap)
 
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	http.Handle("/_session_server/static/", http.StripPrefix("/_session_server/static/", http.FileServer(http.Dir("static"))))
 
 	registerError()
 	registerAuth(config.Security.JwtSecret, config.Server.Protocol, config.Server.Domain, config)

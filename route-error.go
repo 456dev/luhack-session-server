@@ -22,8 +22,8 @@ func registerError() {
 	}
 	// TODO make this actually work, currently error pages that are proxied return 400 codes
 
-	http.HandleFunc("/error", handleError)
-	http.HandleFunc("/error/", handleError)
+	http.HandleFunc("/_session_server/error", handleError)
+	http.HandleFunc("/_session_server/error/", handleError)
 }
 
 func sendError(writer http.ResponseWriter, status int, long string) {
